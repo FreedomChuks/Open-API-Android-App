@@ -29,7 +29,8 @@ constructor(
     private val TAG: String = "AppDebug"
 
 
-    private val viewState = MutableLiveData<ViewState>()
+//    private val viewState = MutableLiveData<ViewState>()
+    private val viewState = MediatorLiveData<ViewState>()
     private val authState = MediatorLiveData<AuthState>()
 
     init{
@@ -102,34 +103,18 @@ constructor(
     }
 
     fun attemptLogin(){
-        authState.value?.run{
+        authState.value?.run {
             this.loginState?.let {
                 if(it.isValidForLogin().equals(LoginState.LoginErrors.none())){
-
-                    showProgress()
-
-                    // Non-null assert (!!) is OK here b/c "isValidForRegistration"
-                    val source: LiveData<AuthState> = authRepository.attemptLogin(it.email!!,  it.password!!)
-                    authState.addSource(source){
-
-                        it.authToken?.let {
-
-                            sessionManager.setValue(it)
-                            setAuthState(
-                                auth_token = it.token,
-                                auth_account_pk = it.account_pk
-                            )
+                    val source = authRepository.login2(it.email!!, it.password!!)
+                    viewState.addSource(source) {
+                        viewState.value = it
+                        when(it.viewStateValue){
+                            ViewState.ViewStateValue.HIDE_PROGRESS -> {viewState.removeSource(source)}
+                            ViewState.ViewStateValue.SHOW_ERROR_DIALOG -> {viewState.removeSource(source)}
+                            else -> viewState.removeSource(source)
                         }
-
-                        it.stateError?.let{
-                            showErrorDialog(it.errorMessage)
-                        }
-
-                        hideProgress()
-
-                        authState.removeSource(source)
                     }
-
                 }
                 else{
                     showErrorDialog(it.isValidForLogin())

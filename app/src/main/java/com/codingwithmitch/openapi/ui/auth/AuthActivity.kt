@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.afollestad.materialdialogs.MaterialDialog
 
 import com.codingwithmitch.openapi.R
+import com.codingwithmitch.openapi.SessionManager
 import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.ui.auth.state.ViewState.ViewStateValue.*
 import com.codingwithmitch.openapi.ui.main.MainActivity
@@ -27,6 +28,9 @@ class AuthActivity : DaggerAppCompatActivity() {
 
     @Inject
     lateinit var providerFactory: ViewModelProviderFactory
+
+    @Inject
+    lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,8 +68,16 @@ class AuthActivity : DaggerAppCompatActivity() {
         })
 
 
-        viewModel.observeAuthState().observe(this, Observer {
-            it.authToken?.let {
+//        viewModel.observeAuthState().observe(this, Observer {
+//            it.authToken?.let {
+//                if(it.account_pk != -1 && it.token != null){
+//                    navMainActivity(it)
+//                }
+//            }
+//        })
+
+        sessionManager.observeAuthState().observe(this, Observer {
+            it?.let {
                 if(it.account_pk != -1 && it.token != null){
                     navMainActivity(it)
                 }

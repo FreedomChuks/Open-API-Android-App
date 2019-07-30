@@ -16,6 +16,13 @@ interface OpenApiAuthService {
         @Field("password") password: String
     ): Response<LoginResponse>
 
+    @POST("account/login")
+    @FormUrlEncoded
+    suspend fun login2(
+        @Field("username") email: String,
+        @Field("password") password: String
+    ): LoginResponse
+
 
     @POST("account/register")
     @FormUrlEncoded

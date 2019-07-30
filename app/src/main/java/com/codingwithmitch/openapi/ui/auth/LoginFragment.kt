@@ -21,6 +21,9 @@ import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.util.TextWatcherCallback
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerFragment
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -79,7 +82,10 @@ class LoginFragment : DaggerFragment() {
     }
 
     fun login(){
-        viewModel.attemptLogin()
+//        GlobalScope.launch {
+            viewModel.attemptLogin()
+//        }
+
     }
 
     fun restoreFieldValues(){
