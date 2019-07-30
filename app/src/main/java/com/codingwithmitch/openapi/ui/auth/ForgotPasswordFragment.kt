@@ -18,7 +18,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 
 import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.ui.auth.ForgotPasswordFragment.WebAppInterface.*
-import com.codingwithmitch.openapi.ui.auth.state.ViewState
+import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState.*
 import com.codingwithmitch.openapi.util.Constants
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerFragment
@@ -62,9 +62,9 @@ class ForgotPasswordFragment : DaggerFragment() {
             activity?.also {
                 it.runOnUiThread {
                     if(isLoading){
-                        viewModel.setViewState(ViewState.showProgress())
+                        viewModel.setScreenState(screen_state = Loading)
                     } else{
-                        viewModel.setViewState(ViewState.hideProgress())
+                        viewModel.setScreenState(screen_state = Data(null))
                     }
                 }
             }
@@ -103,11 +103,11 @@ class ForgotPasswordFragment : DaggerFragment() {
 
     @SuppressLint("SetJavaScriptEnabled")
     fun loadPasswordResetWebView(){
-        viewModel.setViewState(ViewState.showProgress())
+        viewModel.setScreenState(screen_state = Loading)
         webView!!.webViewClient = object: WebViewClient(){
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                viewModel.setViewState(ViewState.hideProgress())
+                viewModel.setScreenState(screen_state = Data(null))
             }
         }
         webView!!.loadUrl(Constants.PASSWORD_RESET_URL)

@@ -2,7 +2,6 @@ package com.codingwithmitch.openapi.repository.auth
 
 import android.content.SharedPreferences
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
 import com.codingwithmitch.openapi.SessionManager
 import com.codingwithmitch.openapi.api.auth.OpenApiAuthService
@@ -11,15 +10,9 @@ import com.codingwithmitch.openapi.models.AccountProperties
 import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.persistence.AccountPropertiesDao
 import com.codingwithmitch.openapi.persistence.AuthTokenDao
-import com.codingwithmitch.openapi.ui.auth.state.AuthState
-import com.codingwithmitch.openapi.ui.auth.state.ViewState
+import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState.*
 import com.codingwithmitch.openapi.util.PreferenceKeys
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import retrofit2.Response
 import java.lang.Exception
 import javax.inject.Inject
 
@@ -34,106 +27,112 @@ constructor(
     )
 {
     private val TAG: String = "AppDebug"
-
-    fun attemptRegistration(email: String, username: String, password: String, confirmPassword: String): LiveData<AuthState> {
-
-        return object: AuthNetworkBoundResource<RegistrationResponse>() {
-
-            override suspend fun createResponse(): Response<RegistrationResponse> {
-                return openApiAuthService.register(email,username,password, confirmPassword)
-            }
-
-            override fun saveUserToPrefs(email: String) {
-                saveAuthenticatedUserToPrefs(email)
-            }
-
-            override suspend fun saveTokenLocally(authToken: AuthToken): Long {
-                return authTokenDao.insert(authToken)
-            }
-
-            override suspend fun saveAccountPropertiesLocally(accountProperties: AccountProperties): Long {
-                return accountPropertiesDao.insert(accountProperties)
-            }
-
-        }.asLiveData()
-    }
-
-    fun attemptLogin(email: String, password: String): LiveData<AuthState> {
-
-        return object: AuthNetworkBoundResource<LoginResponse>() {
-
-            override suspend fun createResponse(): Response<LoginResponse> {
-                return openApiAuthService.login(email.toLowerCase(), password)
-            }
-
-            override fun saveUserToPrefs(email: String) {
-                saveAuthenticatedUserToPrefs(email)
-            }
-
-            override suspend fun saveTokenLocally(authToken: AuthToken): Long {
-                return authTokenDao.insert(authToken)
-            }
-
-            override suspend fun saveAccountPropertiesLocally(accountProperties: AccountProperties): Long {
-                return accountPropertiesDao.insert(accountProperties)
-            }
-
-        }.asLiveData()
-    }
-
     private val ERROR_RESPONSE = "Error"
 
-    fun login2(email: String, password: String) = liveData{
-        emit(ViewState.showProgress())
+
+    fun attemptRegistration(email: String, username: String, password: String, confirmPassword: String) = liveData {
+        emit(Loading)
         try{
-            val response: LoginResponse = openApiAuthService.login2(email.toLowerCase(), password)
+            val response: RegistrationResponse = openApiAuthService.register2(email,username,password, confirmPassword)
 
             if(response.response.equals(ERROR_RESPONSE) ){
-                emit(ViewState.showErrorDialog(response.errorMessage))
+                emit(Error(response.errorMessage))
             }
             else {
-                saveAuthenticatedUserToPrefs(response.email)
+                saveAuthenticatedUserToPrefs(email)
                 try{
-                    if(accountPropertiesDao.insert(AccountProperties(response.pk, response.email, "")) > -1){
+                    if(accountPropertiesDao.insert(AccountProperties(response.pk, response.email, response.username)) > -1){
                         // AccountProperties insert success
-
                         if(authTokenDao.insert(AuthToken(response.pk, response.token)) > -1){
                             // AccountProperties insert success
-                            emit(ViewState.hideProgress())
-                            sessionManager.setValue(AuthToken(response.pk, response.token))
+                            emit(Data(AuthToken(response.pk, response.token)))
                         }
                         else{
                             // insert fail
-                            emit(ViewState.showErrorDialog("Error saving authentication token.\nTry restarting the app."))
+                            emit(Error("Error saving authentication token.\nTry restarting the app."))
                         }
                     }
 
                 }catch (e: Exception){
-                    Log.e(TAG, "handleLoginResponse: ${e.message}")
-                    var errorMessage = e.message
-                    if(errorMessage.isNullOrEmpty()){
-                        errorMessage = "Unknown error."
-                    }
-                    emit(ViewState.showErrorDialog(errorMessage))
+                    Log.e(TAG, "onAuthenticationSuccess: ${e.message}")
+                    emit(Error(extractErrorMessage(e.message)))
                 }
             }
 
         }catch (e: Throwable) {
-            Log.e(TAG, "attempRegistration: ${e.message}")
-            var errorMessage = e.message
-            if(errorMessage.isNullOrEmpty()){
-                errorMessage = "Unknown error."
-            }
-            emit(ViewState.showErrorDialog(errorMessage))
-
+            Log.e(TAG, "registration2: ${e.message}")
+            emit(Error(extractErrorMessage(e.message)))
         } catch (e: HttpException) {
-            Log.e(TAG, "attempRegistration: ${e.message}")
-            var errorMessage = e.message
-            if(errorMessage.isNullOrEmpty()){
-                errorMessage = "Unknown error."
-            }
-            emit(ViewState.showErrorDialog(errorMessage))
+            Log.e(TAG, "registration2: ${e.message}")
+            emit(Error(extractErrorMessage(e.message)))
         }
+    }
+
+
+    fun attemptLogin(email: String, password: String) = liveData{
+        emit(Loading)
+        try{
+            val response: LoginResponse = openApiAuthService.login2(email.toLowerCase(), password)
+
+            if(response.response.equals(ERROR_RESPONSE) ){
+                emit(Error(response.errorMessage))
+            }
+            else {
+                saveAuthenticatedUserToPrefs(email)
+                try{
+                    if(accountPropertiesDao.insert(AccountProperties(response.pk, response.email, "")) > -1){
+                        // AccountProperties insert success
+                        if(authTokenDao.insert(AuthToken(response.pk, response.token)) > -1){
+                            // AccountProperties insert success
+                            emit(Data(AuthToken(response.pk, response.token)))
+                        }
+                        else{
+                            // insert fail
+                            emit(Error("Error saving authentication token.\nTry restarting the app."))
+                        }
+                    }
+
+                }catch (e: Exception){
+                    Log.e(TAG, "onAuthenticationSuccess: ${e.message}")
+                    emit(Error(extractErrorMessage(e.message)))
+                }
+            }
+
+        }catch (e: Throwable) {
+            Log.e(TAG, "login2: ${e.message}")
+            emit(Error(extractErrorMessage(e.message)))
+        } catch (e: HttpException) {
+            Log.e(TAG, "login2: ${e.message}")
+            emit(Error(extractErrorMessage(e.message)))
+        }
+    }
+
+    private suspend fun onAuthenticationSuccess(email: String, username: String, pk: Int, token: String) = liveData {
+        saveAuthenticatedUserToPrefs(email)
+        try{
+            if(accountPropertiesDao.insert(AccountProperties(pk, email, username)) > -1){
+                // AccountProperties insert success
+                if(authTokenDao.insert(AuthToken(pk, token)) > -1){
+                    // AccountProperties insert success
+                    emit(Data(AuthToken(pk, token)))
+                }
+                else{
+                    // insert fail
+                    emit(Error("Error saving authentication token.\nTry restarting the app."))
+                }
+            }
+
+        }catch (e: Exception){
+            Log.e(TAG, "onAuthenticationSuccess: ${e.message}")
+            emit(Error(extractErrorMessage(e.message)))
+        }
+    }
+
+    private fun extractErrorMessage(message: String?): String{
+        if(!message.isNullOrEmpty()){
+            return message
+        }
+        return "Unknown error."
     }
 
     suspend fun retrieveTokenFromLocalDb(pk: Int): AuthToken? {

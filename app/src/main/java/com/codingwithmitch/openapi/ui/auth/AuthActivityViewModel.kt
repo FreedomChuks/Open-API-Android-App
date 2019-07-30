@@ -6,12 +6,9 @@ import androidx.lifecycle.*
 import com.codingwithmitch.openapi.SessionManager
 import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.repository.auth.AuthRepository
-import com.codingwithmitch.openapi.ui.auth.state.AuthState
-import com.codingwithmitch.openapi.ui.auth.state.AuthState.*
-import com.codingwithmitch.openapi.ui.auth.state.AuthState.RegisterState.*
-import com.codingwithmitch.openapi.ui.auth.state.ViewState
+import com.codingwithmitch.openapi.ui.auth.state.*
+import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState.*
 import com.codingwithmitch.openapi.util.PreferenceKeys
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
@@ -29,37 +26,28 @@ constructor(
     private val TAG: String = "AppDebug"
 
 
-//    private val viewState = MutableLiveData<ViewState>()
     private val viewState = MediatorLiveData<ViewState>()
-    private val authState = MediatorLiveData<AuthState>()
+    private val screenState = MediatorLiveData<AuthScreenState>()
 
     init{
-        setAuthState()
+        setViewState()
         checkPreviousAuthUser()
     }
 
-
-    fun observeAuthState(): LiveData<AuthState> {
-        return authState
-    }
 
     fun observeViewState(): LiveData<ViewState> {
         return viewState
     }
 
-
-    fun setViewState(v: ViewState){
-        if(v.viewStateValue != viewState.value?.viewStateValue){
-            viewModelScope.launch(Main) {
-                viewState.value = v
-            }
-        }
+    fun observeAuthScreenState(): LiveData<AuthScreenState> {
+        return screenState
     }
+
 
     fun checkPreviousAuthUser(){
         Log.d(TAG, "checkPreviousAuthUser: ")
 
-        showProgress()
+        setScreenState(screen_state = Loading)
 
         val previousAuthUserEmail: String? = sharedPreferences.getString(PreferenceKeys.PREVIOUS_AUTH_USER, null)
 
@@ -69,7 +57,7 @@ constructor(
         else{
             // No previously authenticated user. Wait for user input
             returnNoTokenFound()
-            hideProgress()
+            setScreenState(screen_state = Data(null))
         }
     }
 
@@ -87,10 +75,7 @@ constructor(
 
                         Log.d(TAG, "Found Token: ${this}")
 
-                        setAuthState(
-                            auth_account_pk = this.account_pk,
-                            auth_token = this.token
-                        )
+                        setScreenState(screen_state = Data(AuthToken(this.account_pk, this.token)))
 
                     } ?: returnNoTokenFound()
 
@@ -98,26 +83,29 @@ constructor(
 
             } ?: returnNoTokenFound()
 
-            hideProgress()
+            setScreenState(screen_state = Data(null))
         }
     }
 
     fun attemptLogin(){
-        authState.value?.run {
-            this.loginState?.let {
-                if(it.isValidForLogin().equals(LoginState.LoginErrors.none())){
-                    val source = authRepository.login2(it.email!!, it.password!!)
-                    viewState.addSource(source) {
-                        viewState.value = it
-                        when(it.viewStateValue){
-                            ViewState.ViewStateValue.HIDE_PROGRESS -> {viewState.removeSource(source)}
-                            ViewState.ViewStateValue.SHOW_ERROR_DIALOG -> {viewState.removeSource(source)}
-                            else -> viewState.removeSource(source)
+        viewState.value?.run {
+            this.loginFields?.let {
+                if(it.isValidForLogin().equals(LoginFields.LoginError.none())){
+                    val source = authRepository.attemptLogin(it.login_email!!, it.login_password!!)
+                    screenState.addSource(source) {
+                        setScreenState(screen_state = it)
+                        when(it){
+                            is Error -> {
+                                screenState.removeSource(source)
+                            }
+                            is Data ->{
+                                screenState.removeSource(source)
+                            }
                         }
                     }
                 }
                 else{
-                    showErrorDialog(it.isValidForLogin())
+                    setScreenState(screen_state = Error(it.isValidForLogin()))
                 }
             }
         }
@@ -125,44 +113,48 @@ constructor(
 
 
     fun attemptRegistration(){
+        viewState.value?.run{
+            this.registrationFields?.let{
 
-        authState.value?.run{
-            this.registerState?.let{
-
-                if(it.isValidForRegistration().equals(RegistrationErrors.none())){
-
-                    showProgress()
-                    // Non-null assert (!!) is OK here b/c "isValidForRegistration"
-                    val source: LiveData<AuthState> = authRepository.attemptRegistration(it.email!!, it.username!!, it.password!!, it.passwordConfirm!!)
-                    authState.addSource(source){
-
-                        it.authToken?.let {
-
-                            sessionManager.setValue(it)
-                            setAuthState(
-                                auth_token = it.token,
-                                auth_account_pk = it.account_pk
-                            )
+                if(it.isValidForRegistration().equals(RegistrationFields.RegistrationError.none())){
+                    val source = authRepository.attemptRegistration(
+                        it.registration_email!!,
+                        it.registration_username!!,
+                        it.registration_password!!,
+                        it.registration_confirm_password!!)
+                    screenState.addSource(source){
+                        setScreenState(screen_state = it)
+                        when(it){
+                            is Error -> {
+                                screenState.removeSource(source)
+                            }
+                            is Data ->{
+                                screenState.removeSource(source)
+                            }
                         }
-
-                        it.stateError?.let{
-                            showErrorDialog(it.errorMessage)
-                        }
-
-                        hideProgress()
-
-                        authState.removeSource(source)
                     }
-
                 }
                 else{
-                    showErrorDialog(it.isValidForRegistration())
+                    setScreenState(screen_state = Error(it.isValidForRegistration()))
                 }
             }
         }
     }
 
-    fun setAuthState(
+
+    fun setScreenState(
+        screen_state: AuthScreenState? = null
+    ){
+        viewModelScope.launch(Main) {
+            screen_state?.let {
+                screenState.value = it
+            }
+        }
+
+    }
+
+    fun setViewState(
+
         // RegistrationState
         registration_email: String? = null,
         registration_username: String? = null,
@@ -171,49 +163,41 @@ constructor(
 
         // LoginState
         login_email: String? = null,
-        login_password: String? = null,
+        login_password: String? = null
 
-        // AuthToken
-        auth_token: String? = null,
-        auth_account_pk: Int? = -1
     ){
         viewModelScope.launch(Main) {
-            AuthState.setAuthState(
-                authState,
-                registration_email,
-                registration_username,
-                registration_password,
-                registration_confirm_password,
-                login_email,
-                login_password,
-                auth_token,
-                auth_account_pk
-            )
-        }
+            viewState.value?.run {
+                // RegistrationState
+                if(this.registrationFields == null){
+                    this.registrationFields = RegistrationFields()
+                }
+                registration_email?.let{ this.registrationFields?.registration_email = it }
+                registration_username?.let {this.registrationFields?.registration_username = it}
+                registration_password?.let {this.registrationFields?.registration_password = it}
+                registration_confirm_password?.let {this.registrationFields?.registration_confirm_password = it}
 
+                // LoginState
+                if(this.loginFields == null){
+                    this.loginFields = LoginFields()
+                }
+                login_email?.let {this.loginFields?.login_email = it}
+                login_password?.let {this.loginFields?.login_password = it}
+
+                // update the LiveData
+                viewState.value = this
+            }?: initViewState(viewState)
+        }
     }
+
+    fun initViewState(viewState: MutableLiveData<ViewState>){
+        viewState.value = ViewState()
+    }
+
 
     fun returnNoTokenFound(){
         Log.d(TAG, "No token found in local db. Waiting for user input...")
-        setAuthState()
-    }
-
-    fun showProgress(){
-        viewModelScope.launch(Main) {
-            viewState.value = ViewState.showProgress()
-        }
-    }
-
-    fun hideProgress(){
-        viewModelScope.launch(Main) {
-            viewState.value = ViewState.hideProgress()
-        }
-    }
-
-    fun showErrorDialog(errorMessage: String){
-        viewModelScope.launch(Main) {
-            viewState.value = ViewState.showErrorDialog(errorMessage)
-        }
+        setViewState()
     }
 
     override fun onCleared() {

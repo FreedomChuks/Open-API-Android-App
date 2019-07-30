@@ -4,28 +4,18 @@ package com.codingwithmitch.openapi.ui.auth
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 
 import com.codingwithmitch.openapi.R
-import com.codingwithmitch.openapi.api.auth.OpenApiAuthService
-import com.codingwithmitch.openapi.api.auth.network_responses.RegistrationResponse
 import com.codingwithmitch.openapi.util.TextWatcherCallback
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_register.*
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import javax.inject.Inject
 
 
@@ -49,16 +39,16 @@ class RegisterFragment : DaggerFragment() {
         override fun afterTextChanged(fieldId: Int, text: String?) {
             when(fieldId){
                 R.id.input_email -> {
-                    viewModel.setAuthState(registration_email = text)
+                    viewModel.setViewState(registration_email = text)
                 }
                 R.id.input_username ->{
-                    viewModel.setAuthState(registration_username = text)
+                    viewModel.setViewState(registration_username = text)
                 }
                 R.id.input_password ->{
-                    viewModel.setAuthState(registration_password = text)
+                    viewModel.setViewState(registration_password = text)
                 }
                 R.id.input_password_confirm ->{
-                    viewModel.setAuthState(registration_confirm_password = text)
+                    viewModel.setViewState(registration_confirm_password = text)
                 }
             }
         }
@@ -88,23 +78,21 @@ class RegisterFragment : DaggerFragment() {
 
         restoreFieldValues()
         initTextWatcher()
-
     }
 
     fun register(){
-
         viewModel.attemptRegistration()
     }
 
     fun restoreFieldValues(){
-        viewModel.observeAuthState().observe(viewLifecycleOwner, Observer {
-            it.registerState?.run {
-                this.email?.let{inputEmail.setText(it)}
-                this.username?.let{inputUsername.setText(it)}
-                this.password?.let{inputPassword.setText(it)}
-                this.passwordConfirm?.let{inputConfirmPassword.setText(it)}
+        viewModel.observeViewState().observe(viewLifecycleOwner, Observer {
+            it.registrationFields?.run {
+                this.registration_email?.let{inputEmail.setText(it)}
+                this.registration_username?.let{inputUsername.setText(it)}
+                this.registration_password?.let{inputPassword.setText(it)}
+                this.registration_confirm_password?.let{inputConfirmPassword.setText(it)}
             }
-            viewModel.observeAuthState().removeObservers(viewLifecycleOwner)
+            viewModel.observeViewState().removeObservers(viewLifecycleOwner)
         })
 
     }

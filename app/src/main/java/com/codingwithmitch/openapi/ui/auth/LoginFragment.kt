@@ -4,29 +4,18 @@ package com.codingwithmitch.openapi.ui.auth
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 
 import com.codingwithmitch.openapi.R
-import com.codingwithmitch.openapi.api.auth.OpenApiAuthService
-import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.util.TextWatcherCallback
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerFragment
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import javax.inject.Inject
 
 
@@ -48,10 +37,10 @@ class LoginFragment : DaggerFragment() {
         override fun afterTextChanged(fieldId: Int, text: String?) {
             when(fieldId){
                 R.id.input_email -> {
-                    viewModel.setAuthState(login_email = text)
+                    viewModel.setViewState(login_email = text)
                 }
                 R.id.input_password ->{
-                    viewModel.setAuthState(login_password = text)
+                    viewModel.setViewState(login_password = text)
                 }
             }
         }
@@ -82,19 +71,16 @@ class LoginFragment : DaggerFragment() {
     }
 
     fun login(){
-//        GlobalScope.launch {
-            viewModel.attemptLogin()
-//        }
-
+        viewModel.attemptLogin()
     }
 
     fun restoreFieldValues(){
-        viewModel.observeAuthState().observe(viewLifecycleOwner, Observer {
-            it.registerState?.run {
-                this.email?.let{inputEmail.setText(it)}
-                this.password?.let{inputPassword.setText(it)}
+        viewModel.observeViewState().observe(viewLifecycleOwner, Observer {
+            it.loginFields?.run {
+                this.login_email?.let{inputEmail.setText(it)}
+                this.login_password?.let{inputPassword.setText(it)}
             }
-            viewModel.observeAuthState().removeObservers(viewLifecycleOwner)
+            viewModel.observeViewState().removeObservers(viewLifecycleOwner)
         })
 
     }

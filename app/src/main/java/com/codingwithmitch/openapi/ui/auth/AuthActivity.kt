@@ -12,7 +12,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.SessionManager
 import com.codingwithmitch.openapi.models.AuthToken
-import com.codingwithmitch.openapi.ui.auth.state.ViewState.ViewStateValue.*
+import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState
 import com.codingwithmitch.openapi.ui.main.MainActivity
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerAppCompatActivity
@@ -45,36 +45,22 @@ class AuthActivity : DaggerAppCompatActivity() {
     }
 
     fun subscribeObservers(){
-        viewModel.observeViewState().observe(this, Observer {
-
-            when(it.viewStateValue){
-
-                CLEAR_ALL -> { // Might not need this?
-                    clearViewState()
-                }
-                SHOW_PROGRESS -> {
-                    displayProgressBar(true)
-                }
-                HIDE_PROGRESS -> {
+        viewModel.observeAuthScreenState().observe(this, Observer { authScreenState ->
+            when(authScreenState){
+                is AuthScreenState.Loading -> displayProgressBar(true)
+                is AuthScreenState.Data -> {
                     displayProgressBar(false)
+                    authScreenState.authToken?.let{
+                        sessionManager.setValue(it)
+                    }
                 }
-                SHOW_ERROR_DIALOG -> {
-                    it.message?.let { theMessage -> displayErrorDialog(theMessage) }
-                }
-                else -> {
-                    clearViewState()
+                is AuthScreenState.Error -> {
+                    displayProgressBar(false)
+                    displayErrorDialog(authScreenState.errorMessage)
                 }
             }
         })
 
-
-//        viewModel.observeAuthState().observe(this, Observer {
-//            it.authToken?.let {
-//                if(it.account_pk != -1 && it.token != null){
-//                    navMainActivity(it)
-//                }
-//            }
-//        })
 
         sessionManager.observeAuthState().observe(this, Observer {
             it?.let {
@@ -111,9 +97,6 @@ class AuthActivity : DaggerAppCompatActivity() {
             .show()
     }
 
-    fun clearViewState(){
-        displayProgressBar(false)
-    }
 }
 
 
