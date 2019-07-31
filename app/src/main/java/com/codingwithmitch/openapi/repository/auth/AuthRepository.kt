@@ -3,7 +3,6 @@ package com.codingwithmitch.openapi.repository.auth
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.liveData
-import com.codingwithmitch.openapi.SessionManager
 import com.codingwithmitch.openapi.api.auth.OpenApiAuthService
 import com.codingwithmitch.openapi.api.auth.network_responses.*
 import com.codingwithmitch.openapi.models.AccountProperties

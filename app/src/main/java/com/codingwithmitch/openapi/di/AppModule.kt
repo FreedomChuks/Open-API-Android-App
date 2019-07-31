@@ -4,8 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
-import com.codingwithmitch.openapi.SessionManager
-import com.codingwithmitch.openapi.di.main.MainScope
+import com.codingwithmitch.openapi.session.SessionManager
 import com.codingwithmitch.openapi.persistence.AccountPropertiesDao
 import com.codingwithmitch.openapi.persistence.AppDatabase
 import com.codingwithmitch.openapi.persistence.AppDatabase.Companion.DATABASE_NAME

@@ -10,8 +10,9 @@ import androidx.lifecycle.ViewModelProviders
 import com.afollestad.materialdialogs.MaterialDialog
 
 import com.codingwithmitch.openapi.R
-import com.codingwithmitch.openapi.SessionManager
+import com.codingwithmitch.openapi.session.SessionManager
 import com.codingwithmitch.openapi.models.AuthToken
+import com.codingwithmitch.openapi.session.SessionResource
 import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState
 import com.codingwithmitch.openapi.ui.main.MainActivity
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
@@ -51,7 +52,7 @@ class AuthActivity : DaggerAppCompatActivity() {
                 is AuthScreenState.Data -> {
                     displayProgressBar(false)
                     authScreenState.authToken?.let{
-                        sessionManager.login(it)
+                        sessionManager.login(SessionResource(it, null))
                     }
                 }
                 is AuthScreenState.Error -> {
@@ -64,17 +65,19 @@ class AuthActivity : DaggerAppCompatActivity() {
 
         sessionManager.observeAuthState().observe(this, Observer {
             it?.let {
-                if(it.account_pk != -1 && it.token != null){
-                    navMainActivity(it)
+                if(it.authToken?.account_pk != -1 && it.authToken?.token != null){
+                    navMainActivity()
+                }
+                it.errorMessage?.let {
+                    displayErrorDialog(errorMessage = it)
                 }
             }
         })
     }
 
-    fun navMainActivity(token: AuthToken){
+    fun navMainActivity(){
         Log.d(TAG, "navMainActivity: called.")
         val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra(getString(R.string.auth_token), token)
         startActivity(intent)
     }
 

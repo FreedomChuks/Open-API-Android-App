@@ -5,8 +5,7 @@ import javax.inject.Inject
 
 class MainRepository
 @Inject
-constructor(
-    )
+constructor()
 {
     private val TAG: String = "AppDebug"
 
