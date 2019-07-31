@@ -33,7 +33,7 @@ constructor(
     fun attemptRegistration(email: String, username: String, password: String, confirmPassword: String) = liveData {
         emit(Loading)
         try{
-            val response: RegistrationResponse = openApiAuthService.register2(email,username,password, confirmPassword)
+            val response: RegistrationResponse = openApiAuthService.register(email,username,password, confirmPassword)
 
             if(response.response.equals(ERROR_RESPONSE) ){
                 emit(Error(response.errorMessage))
@@ -72,7 +72,7 @@ constructor(
     fun attemptLogin(email: String, password: String) = liveData{
         emit(Loading)
         try{
-            val response: LoginResponse = openApiAuthService.login2(email.toLowerCase(), password)
+            val response: LoginResponse = openApiAuthService.login(email.toLowerCase(), password)
 
             if(response.response.equals(ERROR_RESPONSE) ){
                 emit(Error(response.errorMessage))
