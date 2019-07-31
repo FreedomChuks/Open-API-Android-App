@@ -51,7 +51,7 @@ class AuthActivity : DaggerAppCompatActivity() {
                 is AuthScreenState.Data -> {
                     displayProgressBar(false)
                     authScreenState.authToken?.let{
-                        sessionManager.setValue(it)
+                        sessionManager.login(it)
                     }
                 }
                 is AuthScreenState.Error -> {

@@ -73,22 +73,17 @@ class AppModule{
 
     @Singleton
     @Provides
-    fun provideMainRepository(
-        authTokenDao: AuthTokenDao,
-        accountPropertiesDao: AccountPropertiesDao,
-        editor: SharedPreferences.Editor): MainRepository {
-        return MainRepository(
-            authTokenDao,
-            accountPropertiesDao,
-            editor
-        )
+    fun provideSessionManager(authTokenDao: AuthTokenDao): SessionManager {
+        return SessionManager(authTokenDao)
     }
 
     @Singleton
     @Provides
-    fun provideSessionManager(mainRepository: MainRepository): SessionManager {
-        return SessionManager(mainRepository)
+    fun provideMainRepository(): MainRepository {
+        return MainRepository()
     }
+
+
 }
 
 

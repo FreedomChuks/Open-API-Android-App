@@ -22,8 +22,7 @@ constructor(
     val authTokenDao: AuthTokenDao,
     val accountPropertiesDao: AccountPropertiesDao,
     val openApiAuthService: OpenApiAuthService,
-    val sharedPrefsEditor: SharedPreferences.Editor,
-    val sessionManager: SessionManager
+    val sharedPrefsEditor: SharedPreferences.Editor
     )
 {
     private val TAG: String = "AppDebug"
@@ -39,13 +38,13 @@ constructor(
                 emit(Error(response.errorMessage))
             }
             else {
-                saveAuthenticatedUserToPrefs(email)
                 try{
                     if(accountPropertiesDao.insert(AccountProperties(response.pk, response.email, response.username)) > -1){
                         // AccountProperties insert success
                         if(authTokenDao.insert(AuthToken(response.pk, response.token)) > -1){
                             // AccountProperties insert success
                             emit(Data(AuthToken(response.pk, response.token)))
+                            saveAuthenticatedUserToPrefs(email)
                         }
                         else{
                             // insert fail
@@ -78,13 +77,13 @@ constructor(
                 emit(Error(response.errorMessage))
             }
             else {
-                saveAuthenticatedUserToPrefs(email)
                 try{
                     if(accountPropertiesDao.insert(AccountProperties(response.pk, response.email, "")) > -1){
                         // AccountProperties insert success
                         if(authTokenDao.insert(AuthToken(response.pk, response.token)) > -1){
                             // AccountProperties insert success
                             emit(Data(AuthToken(response.pk, response.token)))
+                            saveAuthenticatedUserToPrefs(email)
                         }
                         else{
                             // insert fail
@@ -106,28 +105,6 @@ constructor(
             emit(Error(extractErrorMessage(e.message)))
         }
     }
-
-    private suspend fun onAuthenticationSuccess(email: String, username: String, pk: Int, token: String) = liveData {
-        saveAuthenticatedUserToPrefs(email)
-        try{
-            if(accountPropertiesDao.insert(AccountProperties(pk, email, username)) > -1){
-                // AccountProperties insert success
-                if(authTokenDao.insert(AuthToken(pk, token)) > -1){
-                    // AccountProperties insert success
-                    emit(Data(AuthToken(pk, token)))
-                }
-                else{
-                    // insert fail
-                    emit(Error("Error saving authentication token.\nTry restarting the app."))
-                }
-            }
-
-        }catch (e: Exception){
-            Log.e(TAG, "onAuthenticationSuccess: ${e.message}")
-            emit(Error(extractErrorMessage(e.message)))
-        }
-    }
-
     private fun extractErrorMessage(message: String?): String{
         if(!message.isNullOrEmpty()){
             return message
@@ -142,7 +119,6 @@ constructor(
     suspend fun retrieveAccountPropertiesUsingEmail(email: String): AccountProperties?{
         return accountPropertiesDao.searchByEmail(email)
     }
-
 
     fun saveAuthenticatedUserToPrefs(email: String){
         sharedPrefsEditor.putString(PreferenceKeys.PREVIOUS_AUTH_USER, email)

@@ -21,35 +21,18 @@ class AuthModule{
             .create(OpenApiAuthService::class.java)
     }
 
-//    @AuthScope
-//    @Provides
-//    fun provideAuthRepository(
-//        authTokenDao: AuthTokenDao,
-//        accountPropertiesDao: AccountPropertiesDao,
-//        openApiAuthService: OpenApiAuthService,
-//        editor: SharedPreferences.Editor): AuthRepository {
-//        return AuthRepository(
-//            authTokenDao,
-//            accountPropertiesDao,
-//            openApiAuthService,
-//            editor
-//        )
-//    }
-
     @AuthScope
     @Provides
     fun provideAuthRepository(
         authTokenDao: AuthTokenDao,
         accountPropertiesDao: AccountPropertiesDao,
         openApiAuthService: OpenApiAuthService,
-        editor: SharedPreferences.Editor,
-        sessionManager: SessionManager): AuthRepository {
+        editor: SharedPreferences.Editor): AuthRepository {
         return AuthRepository(
             authTokenDao,
             accountPropertiesDao,
             openApiAuthService,
-            editor,
-            sessionManager
+            editor
         )
     }
 

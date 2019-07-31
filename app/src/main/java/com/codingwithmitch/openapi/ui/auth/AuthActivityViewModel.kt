@@ -19,8 +19,7 @@ class AuthActivityViewModel
 @Inject
 constructor(
     val sharedPreferences: SharedPreferences,
-    val authRepository: AuthRepository,
-    val sessionManager: SessionManager
+    val authRepository: AuthRepository
     ): ViewModel()
 {
     private val TAG: String = "AppDebug"

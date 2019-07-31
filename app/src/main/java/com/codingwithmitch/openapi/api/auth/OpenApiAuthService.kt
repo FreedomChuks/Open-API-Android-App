@@ -25,11 +25,6 @@ interface OpenApiAuthService {
         @Field("password2") password2: String
     ): RegistrationResponse
 
-
-    @GET("account/check_if_account_exists/{email}")
-    suspend fun confirmAccountExists(
-        @Path("email") email: String
-    )
 }
 
 
