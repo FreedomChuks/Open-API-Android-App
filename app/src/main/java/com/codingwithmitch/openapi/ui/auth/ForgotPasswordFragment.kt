@@ -20,20 +20,16 @@ import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.ui.auth.ForgotPasswordFragment.WebAppInterface.*
 import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState.*
 import com.codingwithmitch.openapi.util.Constants
-import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
-import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_forgot_password.*
-import javax.inject.Inject
 
 
-class ForgotPasswordFragment : DaggerFragment() {
+class ForgotPasswordFragment : BaseAuthFragment() {
 
-    private val TAG: String = "AppDebug"
 
     lateinit var navController: NavController
     lateinit var parentView: FrameLayout
     lateinit var passwordResetContainer: LinearLayout
-    lateinit var viewModel: AuthActivityViewModel
+    lateinit var viewModel: AuthViewModel
 
     var webView: WebView? = null
 
@@ -72,9 +68,6 @@ class ForgotPasswordFragment : DaggerFragment() {
         }
     }
 
-    @Inject
-    lateinit var providerFactory: ViewModelProviderFactory
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -91,7 +84,7 @@ class ForgotPasswordFragment : DaggerFragment() {
         passwordResetContainer = view.findViewById(R.id.password_reset_done_container)
 
         viewModel = activity?.run {
-            ViewModelProviders.of(this, providerFactory).get(AuthActivityViewModel::class.java)
+            ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
         }?: throw Exception("Invalid Activity")
 
         loadPasswordResetWebView()

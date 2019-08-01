@@ -11,7 +11,6 @@ import com.afollestad.materialdialogs.MaterialDialog
 
 import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.session.SessionManager
-import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.session.SessionResource
 import com.codingwithmitch.openapi.ui.auth.state.AuthScreenState
 import com.codingwithmitch.openapi.ui.main.MainActivity
@@ -25,7 +24,7 @@ class AuthActivity : DaggerAppCompatActivity() {
 
     lateinit var progressBar: ProgressBar
 
-    lateinit var viewModel: AuthActivityViewModel
+    lateinit var viewModel: AuthViewModel
 
     @Inject
     lateinit var providerFactory: ViewModelProviderFactory
@@ -40,7 +39,7 @@ class AuthActivity : DaggerAppCompatActivity() {
 
         Log.d(TAG, "AuthActivity: started")
 
-        viewModel = ViewModelProviders.of(this, providerFactory).get(AuthActivityViewModel::class.java)
+        viewModel = ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
 
         subscribeObservers()
     }
@@ -76,9 +75,10 @@ class AuthActivity : DaggerAppCompatActivity() {
     }
 
     fun navMainActivity(){
-        Log.d(TAG, "navMainActivity: called.")
+        Log.d(TAG, "navBlogActivity: called.")
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
+        finish()
     }
 
     fun displayProgressBar(bool: Boolean){

@@ -14,23 +14,15 @@ import androidx.lifecycle.ViewModelProviders
 
 import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.util.TextWatcherCallback
-import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
-import dagger.android.support.DaggerFragment
-import javax.inject.Inject
 
 
-class LoginFragment : DaggerFragment() {
+class LoginFragment : BaseAuthFragment() {
 
-    private val TAG: String = "AppDebug"
-
-    lateinit var viewModel: AuthActivityViewModel
+    lateinit var viewModel: AuthViewModel
     lateinit var inputEmail: EditText
     lateinit var inputPassword: EditText
 
     lateinit var textWatcher: LoginFragmentTextWatcher
-
-    @Inject
-    lateinit var providerFactory: ViewModelProviderFactory
 
     val textWatchCallback = object: TextWatcherCallback{
 
@@ -59,7 +51,7 @@ class LoginFragment : DaggerFragment() {
         inputEmail = view.findViewById(R.id.input_email)
         inputPassword = view.findViewById(R.id.input_password)
         viewModel = activity?.run {
-            ViewModelProviders.of(this, providerFactory).get(AuthActivityViewModel::class.java)
+            ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
         }?: throw Exception("Invalid Activity")
 
         view.findViewById<Button>(R.id.login_button).setOnClickListener {

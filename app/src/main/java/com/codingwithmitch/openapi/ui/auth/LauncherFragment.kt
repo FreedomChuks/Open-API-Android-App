@@ -10,21 +10,15 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 
 import com.codingwithmitch.openapi.R
-import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
-import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_launcher.*
-import javax.inject.Inject
 
 
-class LauncherFragment : DaggerFragment() {
+class LauncherFragment : BaseAuthFragment() {
 
-    private val TAG: String = "AppDebug"
 
     lateinit var navController: NavController
-    lateinit var viewModel: AuthActivityViewModel
+    lateinit var viewModel: AuthViewModel
 
-    @Inject
-    lateinit var providerFactory: ViewModelProviderFactory
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,7 +34,7 @@ class LauncherFragment : DaggerFragment() {
         navController = Navigation.findNavController(view)
 
         viewModel = activity?.run {
-            ViewModelProviders.of(this, providerFactory).get(AuthActivityViewModel::class.java)
+            ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
         }?: throw Exception("Invalid Activity")
 
 

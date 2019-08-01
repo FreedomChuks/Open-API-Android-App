@@ -21,4 +21,16 @@
     <string name="field_confirm_password">Confirm password</string>
     <string name="field_register">Register</string>
     <string name="network_error_response">Error</string>
+    <string name="account">Account</string>
+    <string name="logout">Logout</string>
+    <string name="my_blogs">My Blogs</string>
+    <string name="home">Home</string>
+    <string name="create">Create</string>
+    <string name="fragment_main">fragment_main</string>
+    <string name="fragment_create_blog">fragment_create_blog</string>
+    <string name="fragment_update_blog">fragment_update_blog</string>
+    <string name="fragment_view_blog">fragment_view_blog</string>
+    <string name="fragment_account">fragment_account</string>
+    <string name="fragment_change_password">fragment_change_password</string>
+    <string name="fragment_blog">fragment_blog</string>
 </resources>
